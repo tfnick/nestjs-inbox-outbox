@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { DATABASE_DRIVER_FACTORY_TOKEN, DatabaseDriverFactory } from '../driver/database-driver.factory';
+import { DatabaseDriver } from '../driver/database.driver';
 import { InboxOutboxModuleEventOptions, InboxOutboxModuleOptions, MODULE_OPTIONS_TOKEN } from '../inbox-outbox.module-definition';
 import { IListener } from '../listener/contract/listener.interface';
 import { ListenerDuplicateNameException } from '../listener/exception/listener-duplicate-name.exception';
@@ -21,7 +22,7 @@ export class TransactionalEventEmitter {
     @Inject(DATABASE_DRIVER_FACTORY_TOKEN) private databaseDriverFactory: DatabaseDriverFactory,
     @Inject(INBOX_OUTBOX_EVENT_PROCESSOR_TOKEN) private inboxOutboxEventProcessor: InboxOutboxEventProcessorContract,
     @Inject(EVENT_CONFIGURATION_RESOLVER_TOKEN) private eventConfigurationResolver: EventConfigurationResolverContract,
-  ) {} 
+  ) {}
 
   async emit(
     event: InboxOutboxEvent,
@@ -29,6 +30,23 @@ export class TransactionalEventEmitter {
       operation: TransactionalEventEmitterOperations;
       entity: any;
     }[],
+  ): Promise<void>;
+  async emit(
+    event: InboxOutboxEvent,
+    entities: {
+      operation: TransactionalEventEmitterOperations;
+      entity: any;
+    }[],
+    databaseDriver: DatabaseDriver,
+  ): Promise<void>;
+
+  async emit(
+    event: InboxOutboxEvent,
+    entities: {
+      operation: TransactionalEventEmitterOperations;
+      entity: any;
+    }[],
+    databaseDriver?: DatabaseDriver,
   ): Promise<void> {
     const eventOptions: InboxOutboxModuleEventOptions = this.options.events.find((optionEvent) => optionEvent.name === event.name);
 
@@ -36,15 +54,14 @@ export class TransactionalEventEmitter {
       throw new Error(`Event ${event.name} is not configured. Did you forget to add it to the module options?`);
     }
 
-    const databaseDriver = this.databaseDriverFactory.create(this.eventConfigurationResolver);
+    if (!databaseDriver) {
+      databaseDriver = this.databaseDriverFactory.create(this.eventConfigurationResolver);
+    }
     const currentTimestamp = new Date().getTime();
 
-    const inboxOutboxTransportEvent = databaseDriver.createInboxOutboxTransportEvent(
-      event.name,
-      event,
-      currentTimestamp + eventOptions.listeners.expiresAtTTL,
-      currentTimestamp + eventOptions.listeners.readyToRetryAfterTTL,
-    );
+    const inboxOutboxTransportEvent = this.databaseDriverFactory
+      .create(this.eventConfigurationResolver)
+      .createInboxOutboxTransportEvent(event.name, event, currentTimestamp + eventOptions.listeners.expiresAtTTL, currentTimestamp + eventOptions.listeners.readyToRetryAfterTTL);
 
     entities.forEach((entity) => {
       if (entity.operation === 'persist') {
