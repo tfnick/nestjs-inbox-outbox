@@ -44,7 +44,7 @@ export class TransactionalEventEmitter {
 
     const inboxOutboxTransportEvent = databaseDriver.createInboxOutboxTransportEvent(event.name, event, currentTimestamp + eventOptions.listeners.expiresAtTTL, currentTimestamp + eventOptions.listeners.readyToRetryAfterTTL);
 
-    const persister = customDatabaseDriverPersister || databaseDriver;
+    const persister = customDatabaseDriverPersister ?? databaseDriver;
 
     entities.forEach((entity) => {
       if (entity.operation === TransactionalEventEmitterOperations.persist) {
