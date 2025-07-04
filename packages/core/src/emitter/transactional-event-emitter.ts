@@ -24,32 +24,31 @@ export class TransactionalEventEmitter {
     @Inject(EVENT_CONFIGURATION_RESOLVER_TOKEN) private eventConfigurationResolver: EventConfigurationResolverContract,
   ) {}
 
-  async emit(
+  private async emitInternal(
     event: InboxOutboxEvent,
     entities: {
       operation: TransactionalEventEmitterOperations;
       entity: object;
     }[],
     customDatabaseDriverPersister?: DatabaseDriverPersister,
+    awaitProcessor: boolean = false,
   ): Promise<void> {
     const eventOptions: InboxOutboxModuleEventOptions = this.options.events.find((optionEvent) => optionEvent.name === event.name);
-
     if (!eventOptions) {
       throw new Error(`Event ${event.name} is not configured. Did you forget to add it to the module options?`);
     }
-
+    
     const databaseDriver = this.databaseDriverFactory.create(this.eventConfigurationResolver);
     const currentTimestamp = new Date().getTime();
-
+    
     const inboxOutboxTransportEvent = databaseDriver.createInboxOutboxTransportEvent(
       event.name,
       event,
       currentTimestamp + eventOptions.listeners.expiresAtTTL,
       currentTimestamp + eventOptions.listeners.readyToRetryAfterTTL,
     );
-
     const persister = customDatabaseDriverPersister ?? databaseDriver;
-
+    
     entities.forEach((entity) => {
       if (entity.operation === TransactionalEventEmitterOperations.persist) {
         persister.persist(entity.entity);
@@ -62,7 +61,34 @@ export class TransactionalEventEmitter {
     persister.persist(inboxOutboxTransportEvent);
     await persister.flush();
 
+    if (awaitProcessor) {
+      await this.inboxOutboxEventProcessor.process(eventOptions, inboxOutboxTransportEvent, this.getListeners(event.name));
+      return;
+    }
+
     this.inboxOutboxEventProcessor.process(eventOptions, inboxOutboxTransportEvent, this.getListeners(event.name));
+  }
+
+  async emit(
+    event: InboxOutboxEvent,
+    entities: {
+      operation: TransactionalEventEmitterOperations;
+      entity: object;
+    }[],
+    customDatabaseDriverPersister?: DatabaseDriverPersister,
+  ): Promise<void> {
+    return this.emitInternal(event, entities, customDatabaseDriverPersister, false);
+  }
+
+  async emitAsync(
+    event: InboxOutboxEvent,
+    entities: {
+      operation: TransactionalEventEmitterOperations;
+      entity: object;
+    }[],
+    customDatabaseDriverPersister?: DatabaseDriverPersister,
+  ): Promise<void> {
+    return this.emitInternal(event, entities, customDatabaseDriverPersister, true);
   }
 
   addListener<TPayload>(eventName: string, listener: IListener<TPayload>): void {
