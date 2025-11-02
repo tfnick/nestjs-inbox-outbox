@@ -1,5 +1,5 @@
 import { EntityManager, LockMode } from '@mikro-orm/core';
-import { DatabaseDriver, EventConfigurationResolverContract, InboxOutboxTransportEvent } from '@nestixis/nestjs-inbox-outbox';
+import { DatabaseDriver, EventConfigurationResolverContract, InboxOutboxTransportEvent } from '@tfnick/nestjs-inbox-outbox';
 import { MikroOrmInboxOutboxTransportEvent } from '../model/mikroorm-inbox-outbox-transport-event.model';
   
 export class MikroORMDatabaseDriver implements DatabaseDriver {

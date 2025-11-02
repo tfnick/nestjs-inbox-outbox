@@ -1,4 +1,4 @@
-import { DatabaseDriver, EventConfigurationResolverContract, InboxOutboxTransportEvent } from '@nestixis/nestjs-inbox-outbox';
+import { DatabaseDriver, EventConfigurationResolverContract, InboxOutboxTransportEvent } from '@tfnick/nestjs-inbox-outbox';
 import { DataSource, LessThanOrEqual } from 'typeorm';
 import { TypeOrmInboxOutboxTransportEvent } from '../model/typeorm-inbox-outbox-transport-event.model';
   

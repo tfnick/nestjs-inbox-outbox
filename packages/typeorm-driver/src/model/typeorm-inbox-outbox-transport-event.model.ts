@@ -1,4 +1,4 @@
-import { InboxOutboxTransportEvent } from '@nestixis/nestjs-inbox-outbox';
+import { InboxOutboxTransportEvent } from '@tfnick/nestjs-inbox-outbox';
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity({
@@ -6,7 +6,7 @@ import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 })
 export class TypeOrmInboxOutboxTransportEvent implements InboxOutboxTransportEvent {
   @PrimaryGeneratedColumn({type: 'bigint'})
-  id: string;
+  id: number;
 
   @Column({
     name: 'event_name',

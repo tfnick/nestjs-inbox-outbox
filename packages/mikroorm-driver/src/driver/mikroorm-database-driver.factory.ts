@@ -1,5 +1,5 @@
 import { MikroORM } from '@mikro-orm/core';
-import { DatabaseDriver, EventConfigurationResolverContract } from '@nestixis/nestjs-inbox-outbox';
+import { DatabaseDriver, EventConfigurationResolverContract } from '@tfnick/nestjs-inbox-outbox';
 import { MikroORMDatabaseDriver } from './mikroorm.database-driver';
   
 export class MikroORMDatabaseDriverFactory {

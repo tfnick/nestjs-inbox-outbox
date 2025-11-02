@@ -1,5 +1,5 @@
 import { Entity, PrimaryKey, Property } from '@mikro-orm/core';
-import { InboxOutboxTransportEvent } from '@nestixis/nestjs-inbox-outbox';
+import { InboxOutboxTransportEvent } from '@tfnick/nestjs-inbox-outbox';
 
 @Entity({
   tableName: 'inbox_outbox_transport_event',

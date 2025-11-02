@@ -1,4 +1,4 @@
-import { DatabaseDriverPersister } from '@nestixis/nestjs-inbox-outbox/src/driver/database.driver-persister';
+import { DatabaseDriverPersister } from '@tfnick/nestjs-inbox-outbox/src/driver/database.driver-persister';
 import { EntityManager } from 'typeorm';
 
 export class TypeOrmDatabaseDriverPersister implements DatabaseDriverPersister {
