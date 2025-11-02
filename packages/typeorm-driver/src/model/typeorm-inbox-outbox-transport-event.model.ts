@@ -5,8 +5,8 @@ import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
   name: 'inbox_outbox_transport_event',
 })
 export class TypeOrmInboxOutboxTransportEvent implements InboxOutboxTransportEvent {
-  @PrimaryGeneratedColumn()
-  id: number; 
+  @PrimaryGeneratedColumn({type: 'bigint'})
+  id: string;
 
   @Column({
     name: 'event_name',
@@ -28,16 +28,19 @@ export class TypeOrmInboxOutboxTransportEvent implements InboxOutboxTransportEve
   @Column({
     name: 'ready_to_retry_after',
     nullable: true,
+    type: 'bigint',
   })
   readyToRetryAfter: number;
 
   @Column({
     name: 'expire_at',
+    type: 'bigint',
   })
   expireAt: number;
 
   @Column({
     name: 'inserted_at',
+    type: 'bigint',
   })
   insertedAt: number;
 

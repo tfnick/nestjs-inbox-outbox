@@ -10,7 +10,7 @@ export class MigrationInboxOutbox1726154235704 implements MigrationInterface {
             columns: [
                 {
                     name: 'id',
-                    type: 'int',
+                    type: 'bigint',
                     isPrimary: true,
                     isGenerated: true,
                     generationStrategy: 'increment'

@@ -21,7 +21,7 @@
   "dependencies": {
     "@nestixis/nestjs-inbox-outbox": "^1.0.1",
     "reflect-metadata": "^0.2.2",
-    "typeorm": "^0.3.20"
+    "typeorm": "^0.3.27"
   },
   "gitHead": "010c167e60c596cb1aabf28186242a095c351e59"
 }

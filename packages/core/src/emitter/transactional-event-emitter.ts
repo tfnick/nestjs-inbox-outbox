@@ -7,8 +7,11 @@ import { ListenerDuplicateNameException } from '../listener/exception/listener-d
 import { INBOX_OUTBOX_EVENT_PROCESSOR_TOKEN, InboxOutboxEventProcessorContract } from '../processor/inbox-outbox-event-processor.contract';
 import { EVENT_CONFIGURATION_RESOLVER_TOKEN, EventConfigurationResolverContract } from '../resolver/event-configuration-resolver.contract';
 import { InboxOutboxEvent } from './contract/inbox-outbox-event.interface';
+import {InboxOutboxTransportEvent} from "../model/inbox-outbox-transport-event.interface";
+import {EntityManager} from "typeorm/entity-manager/EntityManager";
 
 export enum TransactionalEventEmitterOperations {
+  none = 'none',
   persist = 'persist',
   remove = 'remove',
 }
@@ -56,6 +59,9 @@ export class TransactionalEventEmitter {
       if (entity.operation === TransactionalEventEmitterOperations.remove) {
         persister.remove(entity.entity);
       }
+      if(entity.operation === TransactionalEventEmitterOperations.none){
+        // do nothing
+      }
     });
 
     persister.persist(inboxOutboxTransportEvent);
@@ -89,6 +95,70 @@ export class TransactionalEventEmitter {
     customDatabaseDriverPersister?: DatabaseDriverPersister,
   ): Promise<void> {
     return this.emitInternal(event, entities, customDatabaseDriverPersister, true);
+  }
+
+  async persistUsingCurrentTransaction(
+      event: InboxOutboxEvent,
+      entities: {
+        operation: TransactionalEventEmitterOperations;
+        entity: object;
+      }[],
+      customPersister: DatabaseDriverPersister,
+  ): Promise<InboxOutboxTransportEvent> {
+    const eventOptions: InboxOutboxModuleEventOptions = this.options.events.find((optionEvent) => optionEvent.name === event.name);
+    if (!eventOptions) {
+      throw new Error(`Event ${event.name} is not configured. Did you forget to add it to the module options?`);
+    }
+
+    const databaseDriver = this.databaseDriverFactory.create(this.eventConfigurationResolver);
+    const currentTimestamp = new Date().getTime();
+
+    const inboxOutboxTransportEvent = databaseDriver.createInboxOutboxTransportEvent(
+        event.name,
+        event,
+        currentTimestamp + eventOptions.listeners.expiresAtTTL,
+        currentTimestamp + eventOptions.listeners.readyToRetryAfterTTL,
+    );
+
+    entities.forEach((entity) => {
+      if(entity.operation === TransactionalEventEmitterOperations.none){
+        // do nothing
+      }else{
+        if (entity.operation === TransactionalEventEmitterOperations.persist) {
+          customPersister.persist(entity.entity);
+        }
+        if (entity.operation === TransactionalEventEmitterOperations.remove) {
+          customPersister.remove(entity.entity);
+        }
+      }
+    });
+
+    customPersister.persist(inboxOutboxTransportEvent);
+    return inboxOutboxTransportEvent;
+  }
+
+  async emitEventInNewTransaction(
+      event: InboxOutboxTransportEvent
+  ): Promise<void> {
+    return this.emitInternalRequiredNew(event);
+  }
+
+  private async emitInternalRequiredNew(
+      event: InboxOutboxTransportEvent,
+      awaitProcessor: boolean = true,
+  ): Promise<void> {
+
+    const eventOptions: InboxOutboxModuleEventOptions = this.options.events.find((optionEvent) => optionEvent.name === event.eventName);
+    if (!eventOptions) {
+      throw new Error(`Event ${event.eventName} is not configured. Did you forget to add it to the module options?`);
+    }
+
+    if (awaitProcessor) {
+      await this.inboxOutboxEventProcessor.process(eventOptions, event, this.getListeners(event.eventName));
+      return;
+    }
+
+    this.inboxOutboxEventProcessor.process(eventOptions, event, this.getListeners(event.eventName));
   }
 
   addListener<TPayload>(eventName: string, listener: IListener<TPayload>): void {
