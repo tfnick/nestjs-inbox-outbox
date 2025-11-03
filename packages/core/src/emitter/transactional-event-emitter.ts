@@ -27,6 +27,15 @@ export class TransactionalEventEmitter {
     @Inject(EVENT_CONFIGURATION_RESOLVER_TOKEN) private eventConfigurationResolver: EventConfigurationResolverContract,
   ) {}
 
+
+  getOptionConfig(event: InboxOutboxEvent): InboxOutboxModuleEventOptions {
+    const eventOptions: InboxOutboxModuleEventOptions = this.options.events.find((optionEvent) => optionEvent.name === event.name);
+    if (!eventOptions) {
+      throw new Error(`Event ${event.name} is not configured. Did you forget to add it to the module options?`);
+    }
+    return eventOptions;
+  }
+
   private async emitInternal(
     event: InboxOutboxEvent,
     entities: {
@@ -103,7 +112,7 @@ export class TransactionalEventEmitter {
         operation: TransactionalEventEmitterOperations;
         entity: object;
       }[],
-      customPersister: DatabaseDriverPersister,
+      customDatabaseDriverPersister?: DatabaseDriverPersister,
   ): Promise<InboxOutboxTransportEvent> {
     const eventOptions: InboxOutboxModuleEventOptions = this.options.events.find((optionEvent) => optionEvent.name === event.name);
     if (!eventOptions) {
@@ -120,20 +129,23 @@ export class TransactionalEventEmitter {
         currentTimestamp + eventOptions.listeners.readyToRetryAfterTTL,
     );
 
+    const persister = customDatabaseDriverPersister ?? databaseDriver;
+
     entities.forEach((entity) => {
       if(entity.operation === TransactionalEventEmitterOperations.none){
         // do nothing
       }else{
         if (entity.operation === TransactionalEventEmitterOperations.persist) {
-          customPersister.persist(entity.entity);
+          persister.persist(entity.entity);
         }
         if (entity.operation === TransactionalEventEmitterOperations.remove) {
-          customPersister.remove(entity.entity);
+          persister.remove(entity.entity);
         }
       }
     });
 
-    customPersister.persist(inboxOutboxTransportEvent);
+    persister.persist(inboxOutboxTransportEvent);
+    persister.flush();
     return inboxOutboxTransportEvent;
   }
 

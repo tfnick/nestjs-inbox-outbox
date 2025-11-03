@@ -1,6 +1,6 @@
 {
   "name": "@tfnick/nestjs-inbox-outbox",
-  "version": "1.0.2",
+  "version": "1.0.4",
   "description": "NestJS Inbox Outbox pattern implementation with extensible database drivers",
   "scripts": {
     "build": "tsc",
