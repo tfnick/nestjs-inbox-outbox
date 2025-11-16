@@ -6,6 +6,15 @@ The `InboxOutboxModule` is solution designed for NestJS to tackle the challenges
 ![outbox](https://github.com/user-attachments/assets/83fdb729-70dd-47f9-9449-cd40fe7ddd97)
 
 
+## build && publish
+
+```bash
+npm run build
+
+npm publish --access public 
+
+```
+
 ## Inbox Part Visualization
 ![inbox](https://github.com/user-attachments/assets/fb67a80a-b963-4710-b0d7-a0c28c5fe6a7)
 
