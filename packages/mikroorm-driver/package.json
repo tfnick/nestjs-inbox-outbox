@@ -1,6 +1,6 @@
 {
   "name": "@tfnick/nestjs-inbox-outbox-mikroorm-driver",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "This package provides a driver for the NestJS Inbox Outbox library that uses MikroORM to interact with the database.",
   "scripts": {
     "build": "tsc",

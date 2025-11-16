@@ -17,12 +17,13 @@ export class TypeORMDatabaseDriver implements DatabaseDriver {
     await this.dataSource.transaction(async (transactionalEntityManager) => {
       const now = new Date();
       
+      // @ts-ignore
       events = await transactionalEntityManager.find(TypeOrmInboxOutboxTransportEvent, {
         where: {
           readyToRetryAfter: LessThanOrEqual(now.getTime())
         },
         take: limit,
-        lock: { mode: 'pessimistic_write' } // Lock mode for pessimistic write
+        lock: { mode: 'pessimistic_write', onLocked: 'skip_locked' } // Lock mode for pessimistic write
       });
   
       events.forEach(event => {
