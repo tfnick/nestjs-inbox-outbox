@@ -17,7 +17,7 @@ export class TypeORMDatabaseDriver implements DatabaseDriver {
     await this.dataSource.transaction(async (transactionalEntityManager) => {
       const now = new Date();
       
-      // @ts-ignore
+      // SELECT ... FOR UPDATE SKIP LOCKED
       events = await transactionalEntityManager.find(TypeOrmInboxOutboxTransportEvent, {
         where: {
           readyToRetryAfter: LessThanOrEqual(now.getTime())
